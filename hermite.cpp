@@ -37,54 +37,54 @@ using namespace std;
  */
 class Point {
 public:
-    float x;
-    float y;
-    float z;
+	float x;
+	float y;
+	float z;
 
-    Point() {
-        this->x = 0;
-        this->y = 0;
-        this->z = 0;
-    }
+	Point() {
+		this->x = 0;
+		this->y = 0;
+		this->z = 0;
+	}
 
-    Point(float x, float y, float z) {
-        this->x = x;
-        this->y = y;
-        this->z = z;
-    }
+	Point(float x, float y, float z) {
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
 
-    void drawPoint() {
-        glPointSize(3.0);
-        glBegin(GL_POINTS);
-            glVertex3f(x, y, 0.0);
-        glEnd();
-    }
+	void drawPoint() {
+		glPointSize(3.0);
+		glBegin(GL_POINTS);
+		glVertex3f(x, y, 0.0);
+		glEnd();
+	}
 
-    Point scale(float dx) {
-        return Point(x * dx, y * dx, z * dx);
-    }
+	Point scale(float dx) {
+		return Point(x * dx, y * dx, z * dx);
+	}
 
-    Point operator+(const Point &b) {
-        return Point(this->x + b.x, this->y + b.y, this->z + b.z);
-    }
+	Point operator+(const Point &b) {
+		return Point(this->x + b.x, this->y + b.y, this->z + b.z);
+	}
 
-    void operator=(const Point &b) {
-        this->x = b.x;
-        this->y = b.y;
-        this->z = b.z;
-    }
+	void operator=(const Point &b) {
+		this->x = b.x;
+		this->y = b.y;
+		this->z = b.z;
+	}
 };
 
 //Globals
 vector<Point> points;
 vector<Point>::iterator pointsIterator;
+vector<Point> curvePoints;
 Point currentPoint;
 bool addNew = true;
 static GLsizei width, height;
 static float pointSize = 3.0;
 int pointIndex = 0;
 bool curveDrawMode = false;
-vector<Point> curvePoints;
 
 /**
  * @brief      { Handles the mouse actions. }
@@ -186,24 +186,24 @@ void keyInput (unsigned char key, int x, int y) {
 	switch (key) {
 		
 		case 27:
-			exit(0);
-			break;
+		exit(0);
+		break;
 
 		case 'c':
-			curveDrawMode = true;
-			glutPostRedisplay();
-			break;
+		curveDrawMode = true;
+		glutPostRedisplay();
+		break;
 
 		case 's':
-			cout<<"Enter the point index you want to edit"<<endl;
-			cin>>pointIndex;
-			if (pointIndex >= points.size()) {
-				addNew = true;
-			} else {
-				addNew = false;
-			}
-			break;
-
+		cout<<"Enter the point index you want to edit"<<endl;
+		cin>>pointIndex;
+		if (pointIndex >= points.size()) {
+			addNew = true;
+		} else {
+			addNew = false;
+		}
+		break;
+		
 		case 'd':
 			cout<<"Enter the point index you want to delete:"<<endl;
 			cin>>pointIndex;
@@ -221,14 +221,14 @@ void keyInput (unsigned char key, int x, int y) {
 	}
 }
 
-/*
-First point in points vector is p0
-Second point is the end point of the tangent line from p0 
-Third point in points vector is p1
-Fourth point is the end point of the tangent line from p1
-
-The coefficients are as mentioned in the slide 7 of the lecture on 4th April.
-*/
+/**
+ * @brief      Gets the point in space for the hermite curve.
+ *
+ * @param[in]  points  The points vector containing the control points
+ * @param[in]  t       { The vector gets the point on the curve depending on t value.}
+ *
+ * @return     The point in space for the hermite curve.
+ */
 Point getPointInSpace(vector<Point> points, float t) {
 	
 	float x1 = points[0].x;
@@ -265,17 +265,17 @@ Point getPointInSpace(vector<Point> points, float t) {
  * @param[in]  h     { The height of the window }
  */
 void resize(int w, int h) {
-   glViewport (0, 0, (GLsizei)w, (GLsizei)h);
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
+	glViewport (0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 
-   glOrtho(0.0, (float)w, 0.0, (float)h, -1.0, 1.0);
+	glOrtho(0.0, (float)w, 0.0, (float)h, -1.0, 1.0);
 
-   width = w; 
-   height = h; 
+	width = w; 
+	height = h; 
 
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 /**
@@ -300,25 +300,25 @@ void drawCurve() {
  * @brief      Draws the scene 
  */
 void drawScene(void) {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(0.0, 0.0, 0.0); 
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(0.0, 0.0, 0.0); 
 
-    pointsIterator = points.begin();
-    while(pointsIterator != points.end() ) 
-    {       
-      pointsIterator->drawPoint();
-      pointsIterator++;
-    }
- 
-    glBegin(GL_POINTS);
-        glColor3f(1.0, 0.0, 0.0);
-        glVertex2f(currentPoint.x, currentPoint.y);
-    glEnd();
+	pointsIterator = points.begin();
+	while(pointsIterator != points.end() ) 
+	{       
+		pointsIterator->drawPoint();
+		pointsIterator++;
+	}
 
-    if (curveDrawMode)
-        drawCurve();
+	glBegin(GL_POINTS);
+	glColor3f(1.0, 0.0, 0.0);
+	glVertex2f(currentPoint.x, currentPoint.y);
+	glEnd();
 
-    glFlush();   
+	if (curveDrawMode)
+		drawCurve();
+
+	glFlush();   
 }
 
 /**
@@ -332,17 +332,17 @@ void drawScene(void) {
 int main (int argc, char **argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); 
-    glutInitWindowSize(500, 500);
-    glutInitWindowPosition(100, 100); 
-    glutCreateWindow("Hermite Curve");
-    glClearColor(1.0, 1.0, 1.0, 0.0); 
-    glutDisplayFunc(drawScene); 
-    glutReshapeFunc(resize);  
-    glutKeyboardFunc(keyInput);
+	glutInitWindowSize(500, 500);
+	glutInitWindowPosition(100, 100); 
+	glutCreateWindow("Hermite Curve");
+	glClearColor(1.0, 1.0, 1.0, 0.0); 
+	glutDisplayFunc(drawScene); 
+	glutReshapeFunc(resize);  
+	glutKeyboardFunc(keyInput);
 
-    glutMouseFunc(mouseControl); 
-    glutMotionFunc(mouseMotion);
+	glutMouseFunc(mouseControl); 
+	glutMotionFunc(mouseMotion);
 
-    glutMainLoop(); 
-    return 0;
+	glutMainLoop(); 
+	return 0;
 }
