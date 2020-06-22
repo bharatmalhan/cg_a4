@@ -1,8 +1,40 @@
+/** @mainpage Graphics Assignment
+ * @section authors Team members
+ * These are the team members:
+ * @author     Rut Vora (2016A7PS0052H)
+ * @author     Pranav Taneja 
+ * @author     Bharat Malhan (2016A7TS0050H)
+ * @date       19th June 2020
+ * @section part1 Assignment 3
+ * This is the Computer Graphics Assignment 3.
+ *
+ * Task 1 : Implement Hermite Curve.\n
+ * Task 2 : Implement operations like adding and editing a control point.\n
+ * Task 3 : Implement Hermite Surface. \n
+ * Task 4 : Make the surface of revolution for the hermite curve. \n
+ * Task 5 : Visualize the surface of revolution using a visualizer. \n
+ * 
+ * Compile using g++ hermite.cpp -lglut -lGL -lGLU -o hermite
+ * And run the object file.
+ * 
+ * Press s to select the point number you want to edit. You have to enter the point number in the terminal. \n
+ * Press c to draw the curve. \n
+ * Press b to make the surface of revolution.\n
+ * Press esc key to exit. \n
+ * Use mouse left click to add points. \n
+ * Use c to display the curve. \n
+ * 
+ */
+
+
 #include <bits/stdc++.h>
 #include <GL/glut.h>
 
 using namespace std;
 
+/**
+ * @brief      This class describes a point.
+ */
 class Point {
 public:
     float x;
@@ -43,6 +75,7 @@ public:
     }
 };
 
+//Globals
 vector<Point> points;
 vector<Point>::iterator pointsIterator;
 Point currentPoint;
@@ -51,7 +84,16 @@ static GLsizei width, height;
 static float pointSize = 3.0;
 int pointIndex = 0;
 bool curveDrawMode = false;
+vector<Point> curvePoints;
 
+/**
+ * @brief      { Handles the mouse actions. }
+ *
+ * @param[in]  button  The button clicked.
+ * @param[in]  state   The state of the button, whether pressed or not.
+ * @param[in]  x       { The x coordinate of the mouse pointer when the button was pressed. }
+ * @param[in]  y       { The y coordinate of the mouse pointer when the button was pressed. }
+ */
 void mouseControl(int button, int state, int x, int y) {
 	if (button==GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		currentPoint = Point(x, height - y, 0);
@@ -72,6 +114,12 @@ void mouseControl(int button, int state, int x, int y) {
 	glutPostRedisplay();
 }
 
+/**
+ * @brief      Mouse motion callback routine
+ *
+ * @param[in]  x     { The x coordinate of the mouse pointer at the moment. }
+ * @param[in]  y     { The y coordinate of the mouse pointer at the moment. }
+ */
 void mouseMotion(int x, int y) {
 	currentPoint.x = x;
 	currentPoint.y = height - y;
@@ -80,6 +128,60 @@ void mouseMotion(int x, int y) {
 	glutPostRedisplay();
 }
 
+/**
+ * @brief      Makes a surface of revolution for the Hermite curve
+ */
+void makeSurfaceOfRevolution() {
+	cout << "Building surface of revolution and writing to example.off" << endl;
+	ofstream myfile;
+	myfile.open ("example.off");
+
+	vector<vector<Point>> surfacePoints;
+	vector<Point> temp;
+	myfile << "OFF" << endl;
+	for(auto curvePoint : curvePoints) {
+		temp.clear();;
+		for(int theta = 0; theta < 360;theta++) {
+			float sinTheta = sin(theta);
+			float cosTheta = cos(theta);
+			Point tmp(curvePoint.x * cosTheta + curvePoint.z * sinTheta, curvePoint.y, curvePoint.z * cosTheta - curvePoint.x * sinTheta);
+			temp.push_back(tmp);
+		}
+		surfacePoints.push_back(temp);
+	}
+	vector<int> faceVertices;
+	for(int i = 0;i < surfacePoints.size() - 1;i++) {
+		for(int j = 0;j < 360;j++) {
+			faceVertices.push_back(360*i + j);
+			faceVertices.push_back(360*(i+1) + j);
+			faceVertices.push_back(360 * i + ((j + 1)%360));
+
+			faceVertices.push_back(360 * i + ((j + 1)%360));
+			faceVertices.push_back(360*(i+1) + j);
+			faceVertices.push_back(360*(i+1) + ((j+1)%360));
+		}
+	}
+	myfile << 360*surfacePoints.size() << "\t" << faceVertices.size()/3 << "\t" << "0" << endl;
+	for(auto vec : surfacePoints) {
+		for(auto point : vec) {
+			myfile << point.x << "\t" << point.y << "\t" << point.z << endl;
+		}
+	}
+	for(int i = 0;i < faceVertices.size();i+=3) {
+		myfile << "3\t" << faceVertices[i] << "\t" << faceVertices[i+1] << "\t" << faceVertices[i+2] << endl;	
+	}
+
+	myfile.close();
+	cout << "Writing to file complete!" << endl;
+}
+
+/**
+ * @brief      Handles the input from the keyboard
+ *
+ * @param[in]  key   The key pressed
+ * @param[in]  x     { The x coordinate of the mouse pointer when key was pressed. }
+ * @param[in]  y     { The y coordinate of the mouse pointer when key was pressed }
+ */
 void keyInput (unsigned char key, int x, int y) {
 	switch (key) {
 		
@@ -100,6 +202,20 @@ void keyInput (unsigned char key, int x, int y) {
 			} else {
 				addNew = false;
 			}
+			break;
+
+		case 'd':
+			cout<<"Enter the point index you want to delete:"<<endl;
+			cin>>pointIndex;
+			points.erase(points.begin() + pointIndex);
+			glutPostRedisplay();
+			break;
+
+		case 'b':
+			makeSurfaceOfRevolution();
+		break;
+
+		default:
 			break;
 
 	}
@@ -142,6 +258,12 @@ Point getPointInSpace(vector<Point> points, float t) {
 	return Point(ansx, ansy, ansz);
 }
 
+/**
+ * @brief      Resize function
+ *
+ * @param[in]  w     { The width of the window }
+ * @param[in]  h     { The height of the window }
+ */
 void resize(int w, int h) {
    glViewport (0, 0, (GLsizei)w, (GLsizei)h);
    glMatrixMode(GL_PROJECTION);
@@ -156,9 +278,12 @@ void resize(int w, int h) {
    glLoadIdentity();
 }
 
+/**
+ * @brief      Draws the hermite curve
+ */
 void drawCurve() {
-    vector<Point> curvePoints;
     //sampling the points on the curve at an interval of 0.01
+    curvePoints.clear();
     for (float t = 0.0; t<=1; t+=0.01) {
         curvePoints.push_back(getPointInSpace(points, t));
     }
@@ -171,6 +296,9 @@ void drawCurve() {
     }
 }
 
+/**
+ * @brief      Draws the scene 
+ */
 void drawScene(void) {
     glClear(GL_COLOR_BUFFER_BIT);
     glColor3f(0.0, 0.0, 0.0); 
@@ -193,6 +321,14 @@ void drawScene(void) {
     glFlush();   
 }
 
+/**
+ * @brief      { The main function }
+ *
+ * @param[in]  argc  The count of arguments
+ * @param      argv  The arguments array
+ *
+ * @return     { returns 0 on successful run of the program }
+ */
 int main (int argc, char **argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB); 
